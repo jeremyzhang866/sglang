@@ -199,6 +199,10 @@ class QuantizationConfig(ABC):
         raise NotImplementedError()
 
 
+class MoeQuantizedDict:
+    pass
+
+
 def method_has_implemented_embedding(method_class: Type[QuantizeMethodBase]) -> bool:
     """
     Not all quant methods have embedding implemented, so we need to check that

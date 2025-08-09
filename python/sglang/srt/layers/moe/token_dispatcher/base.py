@@ -15,6 +15,8 @@ if TYPE_CHECKING:
         StandardDispatchOutput,
     )
 
+# ------------------------------ Dispatch Output -------------------------------------
+
 
 @dataclass
 class DispatchOutputChecker:
@@ -65,6 +67,56 @@ class DispatchOutput(Protocol):
 
     @property
     def format(self) -> DispatchOutputFormat: ...
+
+
+# ------------------------------ Combine Input -------------------------------------
+
+
+@dataclass
+class CombineInputChecker:
+    @staticmethod
+    def format_is_standard(
+        combine_input: CombineInput,
+    ) -> TypeGuard[StandardDispatchOutput]:
+        return combine_input.format == CombineInputFormat.STANDARD
+
+    @staticmethod
+    def format_is_deepep_normal(
+        combine_input: CombineInput,
+    ) -> TypeGuard[DeepEPNormalOutput]:
+        return combine_input.format == CombineInputFormat.DEEPEP_NORMAL
+
+    @staticmethod
+    def format_is_deepep_ll(
+        combine_input: CombineInput,
+    ) -> TypeGuard[DeepEPLLOutput]:
+        return combine_input.format == CombineInputFormat.DEEPEP_LL
+
+    @staticmethod
+    def format_is_deepep(
+        combine_input: CombineInput,
+    ) -> TypeGuard[Union[DeepEPNormalOutput, DeepEPLLOutput]]:
+        return combine_input.format in [
+            CombineInputFormat.DEEPEP_NORMAL,
+            CombineInputFormat.DEEPEP_LL,
+        ]
+
+
+class CombineInputFormat(Enum):
+    STANDARD = auto()
+    DEEPEP_NORMAL = auto()
+    DEEPEP_LL = auto()
+
+
+@runtime_checkable
+class CombineInput(Protocol):
+    """Protocol for combine inputs in different formats."""
+
+    @property
+    def format(self) -> CombineInputFormat: ...
+
+
+# ------------------------------ Base Dispatcher -------------------------------------
 
 
 class BaseDispatcherConfig(ABC):

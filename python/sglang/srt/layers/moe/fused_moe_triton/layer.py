@@ -151,16 +151,6 @@ class FusedMoE(torch.nn.Module):
         self.expert_map_cpu = None
         self.expert_map_gpu = None
 
-        self.moe_runner_config = MoeRunnerConfig(
-            activation=activation,
-            apply_router_weight_on_input=apply_router_weight_on_input,
-            inplace=inplace,
-            no_combine=no_combine,
-            routed_scaling_factor=routed_scaling_factor,
-            alpha=alpha,
-            limit=limit,
-        )
-
         enable_flashinfer_cutlass_moe = get_moe_runner_backend().is_flashinfer_cutlass()
 
         if enable_flashinfer_cutlass_moe and quant_config is None:
@@ -213,6 +203,25 @@ class FusedMoE(torch.nn.Module):
         ):
             hidden_size = round_up(hidden_size, 256)
         self.hidden_size = hidden_size
+
+        self.moe_runner_config = MoeRunnerConfig(
+            num_experts=num_experts,
+            num_local_experts=self.num_local_experts,
+            hidden_size=hidden_size,
+            intermediate_size=intermediate_size,
+            layer_id=layer_id,
+            top_k=top_k,
+            num_fused_shared_experts=num_fused_shared_experts,
+            params_dtype=params_dtype,
+            activation=activation,
+            apply_router_weight_on_input=apply_router_weight_on_input,
+            inplace=inplace,
+            no_combine=no_combine,
+            routed_scaling_factor=routed_scaling_factor,
+            alpha=alpha,
+            limit=limit,
+        )
+
         self.quant_method.create_weights(
             layer=self,
             num_experts=self.num_local_experts,
