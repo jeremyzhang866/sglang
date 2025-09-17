@@ -21,11 +21,11 @@ from .base_grammar_backend import BaseGrammarBackend, BaseGrammarObject
 
 
 class ReasonerGrammarObject(BaseGrammarObject):
-    def __init__(self, grammar: BaseGrammarObject, think_end_id, not_need_reasoning):
+    def __init__(self, grammar: BaseGrammarObject, think_end_id, may_can_reasoning):
         super().__init__()
         self.grammar = grammar
         self.think_end_id = think_end_id
-        self.is_in_reasoning = not not_need_reasoning
+        self.is_in_reasoning = may_can_reasoning
 
     def accept_token(self, token: int):
         if token == self.think_end_id:
@@ -51,7 +51,7 @@ class ReasonerGrammarObject(BaseGrammarObject):
         return self.grammar.apply_vocab_mask
 
     def copy(self) -> BaseGrammarObject:
-        return ReasonerGrammarObject(self.grammar.copy(), self.think_end_id)
+        return ReasonerGrammarObject(self.grammar.copy(), self.think_end_id, self.is_in_reasoning)
 
     @property
     def finished(self):
@@ -82,9 +82,9 @@ class ReasonerGrammarBackend(BaseGrammarBackend):
         self.think_end_id = think_end_id
 
     def _init_value_dispatch(
-        self, key: Tuple[str, str], not_need_reasoning: bool
+        self, key: Tuple[str, str], may_can_reasoning: bool
     ) -> Optional[ReasonerGrammarObject]:
-        ret = self.grammar_backend._init_value_dispatch(key, not_need_reasoning)
+        ret = self.grammar_backend._init_value_dispatch(key, may_can_reasoning)
         if ret is None:
             return None
-        return ReasonerGrammarObject(ret, self.think_end_id, not_need_reasoning)
+        return ReasonerGrammarObject(ret, self.think_end_id, may_can_reasoning)

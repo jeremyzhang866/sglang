@@ -1343,9 +1343,9 @@ class Scheduler(
             elif req.sampling_params.structural_tag:
                 key = ("structural_tag", req.sampling_params.structural_tag)
 
-            not_need_reasoning = getattr(self.tokenizer, "think_end_id", None) in getattr(req, "origin_input_ids", [])
+            may_can_reasoning = not getattr(self.tokenizer, "think_end_id", None) in getattr(req, "origin_input_ids", [])
 
-            value, cache_hit = self.grammar_backend.get_cached_or_future_value(key, not_need_reasoning)
+            value, cache_hit = self.grammar_backend.get_cached_or_future_value(key, may_can_reasoning)
             req.grammar = value
 
             if not cache_hit:
