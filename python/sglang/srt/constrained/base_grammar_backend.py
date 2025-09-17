@@ -149,7 +149,7 @@ class BaseGrammarBackend:
     def dispatch_structural_tag(self, key_string: str) -> Optional[BaseGrammarObject]:
         return self._not_supported("structural_tag", key_string)
 
-    def _init_value_dispatch(self, key: Tuple[str, str]) -> Optional[BaseGrammarObject]:
+    def _init_value_dispatch(self, key: Tuple[str, str], not_need_reasoning: bool) -> Optional[BaseGrammarObject]:
         s = time.perf_counter()
         key_type, key_string = key
         if key_type == "json":
@@ -172,12 +172,12 @@ class BaseGrammarBackend:
         return grammar
 
     def get_cached_or_future_value(
-        self, key: Tuple[str, str]
+        self, key: Tuple[str, str], not_need_reasoning: bool
     ) -> Optional[BaseGrammarObject]:
         value = self.cache.get(key)
         if value:
             return value.copy(), True
-        value = self.executor.submit(self._init_value_dispatch, key)
+        value = self.executor.submit(self._init_value_dispatch, key, not_need_reasoning)
         return value, False
 
     def set_cache(self, key: Tuple[str, str], value: BaseGrammarObject):
