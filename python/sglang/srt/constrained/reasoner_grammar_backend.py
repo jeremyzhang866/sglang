@@ -34,6 +34,10 @@ class ReasonerGrammarObject(BaseGrammarObject):
         if not self.is_in_reasoning and token != self.think_end_id:
             self.grammar.accept_token(token)
 
+
+    def rollback(self, k: int):
+        self.grammar.rollback(k)
+
     def allocate_vocab_mask(
         self, vocab_size: int, batch_size: int, device
     ) -> torch.Tensor:

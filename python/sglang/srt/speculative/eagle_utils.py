@@ -1217,17 +1217,25 @@ def traverse_tree(
                 # Accept the current token
                 grammar.accept_token(draft_tokens[curr])
             if not grammar.is_terminated():
-                # Generate the bitmask for the current token
-                grammar.fill_vocab_mask(allocate_token_bitmask, curr)
-                if retrieve_next_token[curr] != -1:
-                    # Visit the child node
-                    dfs(
-                        retrieve_next_token[curr],
-                        retrieve_next_token,
-                        retrieve_next_sibling,
-                        curr,
-                    )
-
+                try:
+                    # Generate the bitmask for the current token
+                    grammar.fill_vocab_mask(allocate_token_bitmask, curr)
+                except RuntimeError as e:
+                    # treat this branch as terminated; stop exploring children
+                    logger.warning("grammar.fill_vocab_mask raised, treat node as terminated: %s", e)
+                    # leave allocate_token_bitmask[curr] as-is (all zeros) or set sentinel
+                    # do not visit child nodes
+                    # ensure we still rollback below
+                    pass
+                else:
+                    if retrieve_next_token[curr] != -1:
+                        # Visit the child node (only if mask generation succeeded)
+                        dfs(
+                            retrieve_next_token[curr],
+                            retrieve_next_token,
+                            retrieve_next_sibling,
+                            curr,
+                        )
             if curr != 0:
                 # Rollback the current token
                 grammar.rollback(1)
