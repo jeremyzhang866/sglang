@@ -510,12 +510,30 @@ class Qwen3ForCausalLM(nn.Module):
         return self.model.embed_tokens.weight, self.lm_head.weight
 
     def set_embed_and_head(self, embed, head):
-        del self.model.embed_tokens.weight
-        del self.lm_head.weight
+        try:
+            # 尝试删除旧的嵌入层权重
+            if hasattr(self.model.embed_tokens, 'weight'):
+                del self.model.embed_tokens.weight
+        except Exception as e:
+            logger.warning(f"Failed to delete embed_tokens.weight: {e}")
+
+        try:
+            # 尝试删除旧的语言模型头部权重
+            if hasattr(self.lm_head, 'weight'):
+                del self.lm_head.weight
+        except Exception as e:
+            logger.warning(f"Failed to delete lm_head.weight: {e}")
+
+        # 设置新的共享权重
         self.model.embed_tokens.weight = embed
         self.lm_head.weight = head
-        torch.cuda.empty_cache()
-        torch.cuda.synchronize()
+
+        # 清理CUDA缓存并同步确保操作完成
+        try:
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+        except Exception as e:
+            logger.warning(f"Failed to synchronize CUDA operations: {e}")
 
     def load_kv_cache_scales(self, quantization_param_path: str) -> None:
         self.model.load_kv_cache_scales(quantization_param_path)
