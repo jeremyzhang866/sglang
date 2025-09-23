@@ -1344,8 +1344,14 @@ class Scheduler(
                 key = ("structural_tag", req.sampling_params.structural_tag)
 
             may_can_reasoning = not getattr(self.tokenizer, "think_end_id", None) in getattr(req, "origin_input_ids", [])
+            
+            # 将推理模式信息直接编码到 grammar_key 中
+            key = (key[0], key[1], may_can_reasoning)
+            
+            # 保存推理模式信息到请求对象，供后续使用
+            req._may_can_reasoning = may_can_reasoning
 
-            value, cache_hit = self.grammar_backend.get_cached_or_future_value(key, may_can_reasoning)
+            value, cache_hit = self.grammar_backend.get_cached_or_future_value(key)
             req.grammar = value
 
             if not cache_hit:
@@ -2212,6 +2218,8 @@ class Scheduler(
                     num_ready_reqs += 1
                     continue
                 req.grammar = req.grammar.result(timeout=0.03)
+                
+                # 直接使用3元素的grammar_key
                 self.grammar_backend.set_cache(req.grammar_key, req.grammar.copy())
                 if req.grammar is INVALID_GRAMMAR_OBJ:
                     req.set_finish_with_abort(
@@ -2246,6 +2254,8 @@ class Scheduler(
                 if req.finished():  # It is aborted by AbortReq
                     continue
                 req.grammar = req.grammar.result()
+                
+                # 直接使用3元素的grammar_key
                 self.grammar_backend.set_cache(req.grammar_key, req.grammar.copy())
                 if req.grammar is INVALID_GRAMMAR_OBJ:
                     req.set_finish_with_abort(
@@ -2260,6 +2270,8 @@ class Scheduler(
             req.grammar.cancel()
             error_msg = f"Grammar preprocessing timed out for {req.grammar_key=}"
             req.set_finish_with_abort(error_msg)
+            
+            # 直接使用3元素的grammar_key
             self.grammar_backend.set_cache(req.grammar_key, INVALID_GRAMMAR_OBJ)
         num_ready_reqs = num_ready_reqs_max + num_timeout_reqs_max
 

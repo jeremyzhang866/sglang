@@ -86,9 +86,10 @@ class ReasonerGrammarBackend(BaseGrammarBackend):
         self.think_end_id = think_end_id
 
     def _init_value_dispatch(
-        self, key: Tuple[str, str], may_can_reasoning: bool
+        self, key: Tuple[str, str, bool]
     ) -> Optional[ReasonerGrammarObject]:
-        ret = self.grammar_backend._init_value_dispatch(key, may_can_reasoning)
+        ret = self.grammar_backend._init_value_dispatch(key)
         if ret is None:
             return None
+        may_can_reasoning = key[2]
         return ReasonerGrammarObject(ret, self.think_end_id, may_can_reasoning)

@@ -149,9 +149,9 @@ class BaseGrammarBackend:
     def dispatch_structural_tag(self, key_string: str) -> Optional[BaseGrammarObject]:
         return self._not_supported("structural_tag", key_string)
 
-    def _init_value_dispatch(self, key: Tuple[str, str], may_can_reasoning: bool) -> Optional[BaseGrammarObject]:
+    def _init_value_dispatch(self, key: Tuple[str, str, bool]) -> Optional[BaseGrammarObject]:
         s = time.perf_counter()
-        key_type, key_string = key
+        key_type, key_string, may_can_reasoning = key
         if key_type == "json":
             grammar = self.dispatch_json(key_string)
         elif key_type == "regex":
@@ -166,21 +166,20 @@ class BaseGrammarBackend:
             grammar = self.dispatch_structural_pattern_v2(key_string)
         else:
             grammar = self.dispatch_fallback(key_type, key_string)
-
+    
         if grammar is not None and grammar.grammar_stats is not None:
             grammar.grammar_stats.compilation_time = time.perf_counter() - s
         return grammar
-
-    def get_cached_or_future_value(
-        self, key: Tuple[str, str], may_can_reasoning: bool
-    ) -> Optional[BaseGrammarObject]:
-        # value = self.cache.get(key)
-        # if value:
-        #     return value.copy(), True
-        value = self.executor.submit(self._init_value_dispatch, key, may_can_reasoning)
-        return value, False
-
-    def set_cache(self, key: Tuple[str, str], value: BaseGrammarObject):
+    
+    def get_cached_or_future_value(self, key):
+        if key in self.cache:
+            return self.cache[key], True
+        
+        future = self.executor.submit(self._init_value_dispatch, key)
+        self.cache[key] = future
+        return future, False
+    
+    def set_cache(self, key, value: BaseGrammarObject):
         self.cache[key] = value
 
     def reset(self):
