@@ -2841,6 +2841,7 @@ class Scheduler(
 
         # Run forward
         if self.is_generation:
+            future_indices = None
             if self.enable_overlap:
                 # Self-gates on batch.spec_info.future_indices; non-spec_v2
                 # no-ops (ForwardBatch.init_new lazily computes the sum).
@@ -2913,6 +2914,14 @@ class Scheduler(
                 if isinstance(batch_result.next_token_ids, torch.Tensor):
                     batch.input_ids = batch_result.next_token_ids.to(torch.int64)
                 self.update_cache_from_scheduler(batch, batch_result)
+
+            # V1 non-overlap workers return next_draft_input via batch_result;
+            # scheduler installs it on batch.spec_info (was: worker-internal
+            # mutation). Overlap branch handles spec_v2 above; this catches
+            # the non-overlap path.
+            if batch_result.next_draft_input is not None and not self.enable_overlap:
+                batch.spec_info = batch_result.next_draft_input
+
 
             # These 2 values are needed for processing the output, but the values can be
             # modified by overlap schedule. So we have to copy them here so that
