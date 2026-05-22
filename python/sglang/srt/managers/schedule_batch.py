@@ -2503,8 +2503,6 @@ class ScheduleBatch(ScheduleBatchDisaggregationDecodeMixin):
                 self.orig_seq_lens = self.orig_seq_lens[:0]
             if self.seq_lens_cpu is not None:
                 self.seq_lens_cpu = self.seq_lens_cpu[:0]
-            if self.output_ids is not None:
-                self.output_ids = self.output_ids[:0]
             self.seq_lens_sum = 0
             return
 
