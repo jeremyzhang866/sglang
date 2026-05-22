@@ -2476,7 +2476,6 @@ class ScheduleBatch(ScheduleBatchDisaggregationDecodeMixin):
             f"len(reqs)={n_reqs}"
         )
 
-
         if keep_indices is None:
             if isinstance(chunked_req_to_exclude, Req):
                 chunked_req_to_exclude = [chunked_req_to_exclude]

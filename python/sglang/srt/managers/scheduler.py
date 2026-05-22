@@ -2922,7 +2922,6 @@ class Scheduler(
             if batch_result.next_draft_input is not None and not self.enable_overlap:
                 batch.spec_info = batch_result.next_draft_input
 
-
             # These 2 values are needed for processing the output, but the values can be
             # modified by overlap schedule. So we have to copy them here so that
             # we can use the correct values in output processing.
