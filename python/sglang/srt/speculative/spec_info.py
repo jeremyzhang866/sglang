@@ -189,41 +189,28 @@ class SpeculativeAlgorithm(Enum):
 
             return FrozenKVMTPWorker
 
+        # EAGLE / EAGLE3 / STANDALONE / MULTI_LAYER_EAGLE always use the V2
+        # worker, regardless of `disable_overlap_schedule`. The scheduler drives
+        # the V2 worker synchronously in the non-overlap path (see
+        # `_spec_v2_sync_forward_isolation` / the `is_spec_v2` branch in
+        # run_batch); the worker itself does not depend on overlap state.
         if self.is_eagle() and server_args.enable_multi_layer_eagle:
-            # FIXME: migrate to EagleWorker
-            if enable_overlap:
-                from sglang.srt.speculative.multi_layer_eagle_worker_v2 import (
-                    MultiLayerEagleWorkerV2,
-                )
-
-                return MultiLayerEagleWorkerV2
-
-            from sglang.srt.speculative.multi_layer_eagle_worker import (
-                MultiLayerEagleWorker,
+            from sglang.srt.speculative.multi_layer_eagle_worker_v2 import (
+                MultiLayerEagleWorkerV2,
             )
 
-            return MultiLayerEagleWorker
+            return MultiLayerEagleWorkerV2
 
         elif self.is_eagle():
-            if enable_overlap:
-                from sglang.srt.speculative.eagle_worker_v2 import EAGLEWorkerV2
+            from sglang.srt.speculative.eagle_worker_v2 import EAGLEWorkerV2
 
-                return EAGLEWorkerV2
-
-            from sglang.srt.speculative.eagle_worker import EAGLEWorker
-
-            return EAGLEWorker
+            return EAGLEWorkerV2
         elif self.is_standalone():
-            if enable_overlap:
-                from sglang.srt.speculative.standalone_worker_v2 import (
-                    StandaloneWorkerV2,
-                )
+            from sglang.srt.speculative.standalone_worker_v2 import (
+                StandaloneWorkerV2,
+            )
 
-                return StandaloneWorkerV2
-
-            from sglang.srt.speculative.standalone_worker import StandaloneWorker
-
-            return StandaloneWorker
+            return StandaloneWorkerV2
         elif self.is_ngram():
             if enable_overlap:
                 raise ValueError(
