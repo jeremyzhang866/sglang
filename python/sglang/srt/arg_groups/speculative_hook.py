@@ -274,29 +274,35 @@ def _handle_eagle_family(server_args: "ServerArgs") -> None:
             "Max running requests is reset to 48 for speculative decoding. You can override this by explicitly setting --max-running-requests."
         )
 
-    spec_v1_reason = None
+    # Spec v2 (the only remaining eagle/eagle3/standalone implementation) only
+    # supports topk == 1. Spec v1, which handled topk > 1 tree drafting, has
+    # been removed, so topk > 1 is no longer supported on this path.
     if (
         server_args.speculative_eagle_topk is not None
         and server_args.speculative_eagle_topk > 1
-        and not server_args.disable_overlap_schedule
     ):
-        server_args.disable_overlap_schedule = True
-        spec_v1_reason = "spec v2 currently only supports topk = 1"
-    elif (
+        raise ValueError(
+            "EAGLE/EAGLE3/STANDALONE speculative decoding currently only supports "
+            "speculative_eagle_topk == 1 (spec v1 removed; spec v2 tree drafting "
+            "with topk > 1 is not yet supported). Set --speculative-eagle-topk 1."
+        )
+
+    # SGLANG_ENABLE_SPEC_V2=False selects the non-overlap (synchronous) spec v2
+    # path instead of the overlap-scheduled one; both run the V2 worker.
+    if (
         not envs.SGLANG_ENABLE_SPEC_V2.get()
         and not server_args.disable_overlap_schedule
     ):
         server_args.disable_overlap_schedule = True
-        spec_v1_reason = "SGLANG_ENABLE_SPEC_V2=False"
 
     if server_args.disable_overlap_schedule:
         logger.warning(
-            "Spec v1 is used for eagle/eagle3/standalone speculative decoding because %s.",
-            spec_v1_reason or "overlap schedule is disabled",
+            "Non-overlap (synchronous) spec v2 is used for eagle/eagle3/standalone "
+            "speculative decoding."
         )
     else:
         logger.warning(
-            "Spec v2 is enabled by default for eagle/eagle3/standalone speculative decoding."
+            "Overlap spec v2 is enabled by default for eagle/eagle3/standalone speculative decoding."
         )
 
     if server_args.enable_mixed_chunk:

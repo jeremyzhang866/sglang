@@ -1,6 +1,7 @@
 import json
 import random
 import time
+import unittest
 
 import requests
 
@@ -36,6 +37,14 @@ class EagleServerBase(CustomTestCase):
 
     @classmethod
     def setUpClass(cls):
+        # Spec v1 has been removed; spec v2 only supports topk == 1. Tree
+        # drafting (topk > 1) is not yet supported on the v2 path, so skip those
+        # configs instead of launching a server that would fail to start.
+        if cls.spec_topk is not None and cls.spec_topk > 1:
+            raise unittest.SkipTest(
+                f"EAGLE spec v2 only supports speculative_eagle_topk == 1 "
+                f"(got {cls.spec_topk}); topk > 1 not yet supported."
+            )
         cls.base_url = DEFAULT_URL_FOR_TEST
         with envs.SGLANG_ENABLE_ASYNC_ASSERT.override(True):
             cls.process = popen_launch_server(
