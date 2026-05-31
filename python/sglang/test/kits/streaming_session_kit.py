@@ -24,13 +24,18 @@ from sglang.test.server_fixtures.streaming_session_fixture import (
 class StreamingSessionKitMixin:
     """Streaming-session KV-inheritance + retract/abort-recovery suite."""
 
-    # -1 for non-overlap subclasses: the last sampled token isn't committed
-    # before max_new stops, so slot.kv_committed_len = input + output - 1.
-    kv_inherit_offset = 0
+    # Allowed inherited-cache offsets vs the previous turn's total. Non-overlap
+    # spec decode jitters by 1: the final sampled (bonus) token's KV is only
+    # computed by the next forward, which sync skips at finish. If the finishing
+    # spec round lands exactly on max_new the bonus is kept but uncommitted (-1);
+    # if it overshoots, the bonus is truncated away and the rest is committed (0).
+    # Both are correct -- only cache reuse differs. Overlap runs a drain forward
+    # that always fills the bonus, so it stays exactly 0.
+    kv_inherit_offsets = (0,)
 
     def test_kv_cache_inheritance(self, gen_len=12):
         """Each turn's cached_tokens must equal previous turn's prompt+completion
-        (modulo kv_inherit_offset)."""
+        (modulo kv_inherit_offsets)."""
         chunks = [
             "Let me tell you something about France.",
             "The capital of France is",
@@ -75,11 +80,11 @@ class StreamingSessionKitMixin:
             else:
                 # Turns 2+: cached_tokens reflects KV inherited from previous turn
                 # (via inherit_kv_states, not radix tree matching).
-                expected = prev_kv_len + self.kv_inherit_offset
-                self.assertEqual(
+                allowed = {prev_kv_len + off for off in self.kv_inherit_offsets}
+                self.assertIn(
                     cached,
-                    expected,
-                    f"Turn {turn_idx + 1}: inherited {cached} != expected {expected}",
+                    allowed,
+                    f"Turn {turn_idx + 1}: inherited {cached} not in {sorted(allowed)}",
                 )
             prev_kv_len = prompt_tokens + completion_tokens
 
