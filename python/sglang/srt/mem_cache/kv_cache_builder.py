@@ -55,7 +55,11 @@ def get_draft_kv_pool(
     if draft_worker is None or spec_algorithm.is_ngram():
         return None, None
 
-    if spec_algorithm.supports_spec_v2() and enable_overlap:
+    # V2 coordinators (EAGLE family) nest the draft runner under
+    # `.draft_worker`, regardless of overlap -- the non-overlap path also uses
+    # the V2 worker now. The fallthrough serves the V1-style DFLASH /
+    # FROZEN_KV_MTP coordinators, which expose `.model_runner` directly.
+    if spec_algorithm.supports_spec_v2():
         if server_args.enable_multi_layer_eagle:
             draft_runner = draft_worker.draft_worker.draft_runner_list[0]
         else:
