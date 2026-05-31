@@ -37,6 +37,12 @@ class DraftExecutor(ABC):
         """Primary draft `ModelRunner`. `None` for algorithms with no draft model
         (e.g. NGRAM); for multi-layer algorithms, points to layer 0."""
 
+    @property
+    def spec_v2_attn_backends(self) -> tuple:
+        """Attn backends touched by spec_v2 forward; OR-ed by decide_needs_cpu_seq_lens.
+        Default returns target only; subclasses extend with draft backends."""
+        return (self.target_worker.model_runner.attn_backend,)
+
     @abstractmethod
     def init_attention_backend(self) -> None: ...
 
