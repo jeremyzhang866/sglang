@@ -3087,6 +3087,18 @@ class Scheduler(
                 # Install after the isolation restore so it survives as the
                 # next-iter draft input.
                 batch.spec_info = batch_result.next_draft_input
+                # Advance SB.seq_lens by the verified tokens. Overlap does this
+                # next iter via resolve_seq_lens_cpu (from the published
+                # new_seq_lens); the sync path re-applies it here because the
+                # snapshot restore reverted the worker's in-forward growth
+                # ("SB.seq_lens must advance each verify"). input_ids is rebuilt
+                # next iter (verify sets it from draft_token).
+                if batch_result.new_seq_lens is not None:
+                    batch.seq_lens = batch_result.new_seq_lens
+                    if batch.seq_lens_cpu is not None:
+                        batch.seq_lens_cpu = batch_result.new_seq_lens.to("cpu")
+                        batch.seq_lens_sum = int(batch.seq_lens_cpu.sum())
+                batch.input_ids = None
                 self.update_cache_from_scheduler(batch, batch_result)
                 # Sync D2H: process_batch_result_decode reads CPU tensors
                 # (accept_lens / next_token_ids) after syncing copy_done.
