@@ -2372,12 +2372,10 @@ class ScheduleBatch(ScheduleBatchDisaggregationDecodeMixin):
 
     @property
     def is_spec_v2(self):
-        # "Uses the V2 spec worker / schema": per-phase EagleDraftInput carried
-        # forward, output processed in the result processor. Independent of
-        # overlap -- the non-overlap path also drives the V2 worker (just
-        # synchronously, without the future_map relay). Overlap-only machinery
-        # (future_map relay, on_publish, stream isolation) gates on
-        # `enable_overlap`, not on this flag.
+        # "Uses the V2 worker / schema" (EagleDraftInput carried forward, output
+        # in the result processor). Overlap-independent: the non-overlap path
+        # also drives the V2 worker, just synchronously. Overlap-only machinery
+        # (future_map relay, on_publish, stream isolation) gates on enable_overlap.
         return self.spec_algorithm.supports_spec_v2()
 
     def prepare_for_decode(self):

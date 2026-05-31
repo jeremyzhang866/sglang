@@ -3078,19 +3078,18 @@ class Scheduler(
                     )
                 batch.input_ids = None
             elif batch.is_spec_v2:
-                # Non-overlap V2: drive the V2 worker synchronously. No
-                # future_map relay and no on_publish -- the next draft input is
-                # installed directly as spec_info (mirrors the overlap path,
-                # minus the async machinery).
+                # Non-overlap V2: drive the V2 worker synchronously -- no
+                # future_map relay, no on_publish; next draft input installed
+                # directly as spec_info.
                 resolve_forward_inputs(batch, self.future_map)
                 with self._spec_v2_sync_forward_isolation(batch):
                     batch_result = self.model_worker.forward_batch_generation(batch)
-                # Install after the snapshot restore so it survives as the
-                # next-iter draft input (the overlap path installs it here too).
+                # Install after the isolation restore so it survives as the
+                # next-iter draft input.
                 batch.spec_info = batch_result.next_draft_input
                 self.update_cache_from_scheduler(batch, batch_result)
-                # Synchronous CPU pull: process_batch_result_decode reads CPU
-                # tensors (accept_lens / next_token_ids) and syncs on copy_done.
+                # Sync D2H: process_batch_result_decode reads CPU tensors
+                # (accept_lens / next_token_ids) after syncing copy_done.
                 batch_result.copy_done = self.device_module.Event()
                 batch_result.copy_to_cpu(
                     return_logprob=batch.return_logprob,
