@@ -869,6 +869,42 @@ def _wait_for_server_health(
     return False, "Server failed to start within the timeout period"
 
 
+# EAGLE/EAGLE3/STANDALONE algorithm names that route through
+# `_handle_eagle_family` (NEXTN is the eagle alias). Spec v1 (which handled
+# topk > 1) has been removed and spec v2 only supports topk == 1.
+_EAGLE_FAMILY_SPEC_ALGOS = {"EAGLE", "EAGLE3", "NEXTN", "STANDALONE"}
+
+
+def _arg_value(command: list, name: str) -> Optional[str]:
+    """Return the value of CLI flag ``name`` in ``command``, supporting both
+    ``--flag value`` and ``--flag=value`` forms."""
+    for i, tok in enumerate(command):
+        tok = str(tok)
+        if tok == name:
+            if i + 1 < len(command):
+                return str(command[i + 1])
+        elif tok.startswith(name + "="):
+            return tok[len(name) + 1 :]
+    return None
+
+
+def _skip_if_unsupported_spec_topk(command: list) -> None:
+    """Raise ``unittest.SkipTest`` for eagle-family spec configs with topk > 1.
+
+    Centralizes the skip so every server-launching test inherits it, rather
+    than guarding each fixture individually.
+    """
+    algo = _arg_value(command, "--speculative-algorithm")
+    topk = _arg_value(command, "--speculative-eagle-topk")
+    if algo is None or topk is None:
+        return
+    if algo.upper() in _EAGLE_FAMILY_SPEC_ALGOS and int(topk) > 1:
+        raise unittest.SkipTest(
+            f"{algo} spec v2 only supports speculative_eagle_topk == 1 "
+            f"(got {topk}); topk > 1 not yet supported (spec v1 removed)."
+        )
+
+
 def popen_launch_server(
     model: str,
     base_url: str,
@@ -961,6 +997,11 @@ def popen_launch_server(
         command += ["--api-key", api_key]
 
     print(f"command={shlex.join(command)}")
+
+    # Spec v1 has been removed; eagle/eagle3/standalone spec v2 only supports
+    # topk == 1 (tree drafting with topk > 1 is not yet supported on the v2
+    # path). Skip such configs instead of failing on the server-side raise.
+    _skip_if_unsupported_spec_topk(command)
 
     # Track if offline mode was enabled for potential retry
     offline_enabled = env.get("HF_HUB_OFFLINE") == "1"
