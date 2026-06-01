@@ -665,17 +665,31 @@ class MambaAttnBackendBase(AttentionBackend):
         Note: Conv state tracking for extend is handled separately via gather operations
         using indices computed by `_init_track_conv_indices`.
         """
-        if forward_metadata.has_mamba_track_mask:
-            h = h.squeeze(0)
+        # Re-evaluate the gate from the runtime forward_batch.mamba_track_mask
+        # rather than relying on the cached forward_metadata.has_mamba_track_mask.
+        # The cached flag can be stale relative to the mask seen at forward time
+        # (observed under PD-disagg with --mamba-scheduler-strategy extra_buffer):
+        # when the cached flag is False but the runtime mask has True entries,
+        # the SSM state writes below are silently skipped, leaving the ping-pong
+        # track slots uninitialized (zero). cache_finished_req then commits a
+        # zero slot into the radix tree, so subsequent prefix-matching requests
+        # load a zero state as the mamba checkpoint at the matched chunk
+        # boundary and accuracy drops several percentage points.
+        if (
+            forward_batch.mamba_track_mask is None
+            or not forward_batch.mamba_track_mask.any()
+        ):
+            return
+        h = h.squeeze(0)
 
-            if forward_metadata.track_ssm_h_src.numel() > 0:
-                ssm_states[forward_metadata.track_ssm_h_dst] = h[
-                    forward_metadata.track_ssm_h_src
-                ].to(ssm_states.dtype, copy=False)
-            if forward_metadata.track_ssm_final_src.numel() > 0:
-                ssm_states[forward_metadata.track_ssm_final_dst] = ssm_states[
-                    forward_metadata.track_ssm_final_src
-                ]
+        if forward_metadata.track_ssm_h_src.numel() > 0:
+            ssm_states[forward_metadata.track_ssm_h_dst] = h[
+                forward_metadata.track_ssm_h_src
+            ].to(ssm_states.dtype, copy=False)
+        if forward_metadata.track_ssm_final_src.numel() > 0:
+            ssm_states[forward_metadata.track_ssm_final_dst] = ssm_states[
+                forward_metadata.track_ssm_final_src
+            ]
 
 
 class Mamba2AttnBackend(MambaAttnBackendBase):
