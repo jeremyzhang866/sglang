@@ -665,16 +665,10 @@ class MambaAttnBackendBase(AttentionBackend):
         Note: Conv state tracking for extend is handled separately via gather operations
         using indices computed by `_init_track_conv_indices`.
         """
-        # Re-evaluate the gate from the runtime forward_batch.mamba_track_mask
-        # rather than relying on the cached forward_metadata.has_mamba_track_mask.
-        # The cached flag can be stale relative to the mask seen at forward time
-        # (observed under PD-disagg with --mamba-scheduler-strategy extra_buffer):
-        # when the cached flag is False but the runtime mask has True entries,
-        # the SSM state writes below are silently skipped, leaving the ping-pong
-        # track slots uninitialized (zero). cache_finished_req then commits a
-        # zero slot into the radix tree, so subsequent prefix-matching requests
-        # load a zero state as the mamba checkpoint at the matched chunk
-        # boundary and accuracy drops several percentage points.
+        # Re-evaluate from the runtime forward_batch.mamba_track_mask to avoid
+        # a race with the async H2D of the mask: the cached
+        # has_mamba_track_mask can read False at forward time even when the
+        # mask has True entries.
         if (
             forward_batch.mamba_track_mask is None
             or not forward_batch.mamba_track_mask.any()
