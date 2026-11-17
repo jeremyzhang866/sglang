@@ -1,0 +1,20 @@
+test/registered/unit/managers/test_batch_result_processor_hidden_states.py
+  s_be2e08a27aefac::t_20fd91145faab9 17,54-55,60,71-73,390,411-412
+  s_be2e08a27aefac::t_5272f26f59ccbd 52-53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "99893e14a61cffbd9a180e718cbb0b1f66bd4a2a",
+  "prompts": {},
+  "sessions": {
+    "s_be2e08a27aefac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a100fc-9568-7c43-82d2-9e458d48e41b",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "jeremyzhang866 <jeremy.zhang866@gmail.com>"
+    }
+  }
+}
