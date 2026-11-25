@@ -1,0 +1,41 @@
+python/sglang/kernels/ops/sampling/__init__.py
+  s_d482fbceb53c16::t_36b3aebd09dd6e 263-270
+python/sglang/srt/environ.py
+  s_d482fbceb53c16::t_df11639d8e7b7a 1765-1766
+  s_d482fbceb53c16::t_36b3aebd09dd6e 1767
+python/sglang/srt/speculative/target_verify.py
+  s_d482fbceb53c16::t_df11639d8e7b7a 118,121-122
+  s_d482fbceb53c16::t_a3fbeb92bd977a 119,123
+  s_d482fbceb53c16::t_36b3aebd09dd6e 13-15
+  s_d482fbceb53c16::t_8698d76b6c1a37 120
+test/registered/kernels/ops/sampling/test_selected_token_logprobs.py
+  s_d482fbceb53c16::t_36b3aebd09dd6e 1-10,12-34,36-39,43-48,50-59,61-62,65-68,71,73-75,78-83
+  s_d482fbceb53c16::t_b116defc601dbe 11
+  s_d482fbceb53c16::t_df11639d8e7b7a 35,72
+  s_d482fbceb53c16::t_a3fbeb92bd977a 60,63-64,69-70,76-77
+  s_d482fbceb53c16::t_d65eb7b5df542d 40-42,49
+python/sglang/kernels/ops/sampling/selected_token_logprobs.py
+  s_d482fbceb53c16::t_36b3aebd09dd6e 1-132
+python/sglang/srt/speculative/dspark_components/dspark_logprobs.py
+  s_d482fbceb53c16::t_df11639d8e7b7a 1,20,64,71
+  s_d482fbceb53c16::t_d65eb7b5df542d 35,59
+  s_d482fbceb53c16::t_a3fbeb92bd977a 18,21,23-24,26
+  s_d482fbceb53c16::t_36b3aebd09dd6e 2-16,19,22,25,27-34,36-42,45-46,52-54,57-58,60-63,66-70,72-75
+  s_d482fbceb53c16::t_7f98507d124e9e 17,43-44,47-51,55-56,65,76-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "337b41cf50a0a4a7efe1d845d5c08a57a3a824c8",
+  "prompts": {},
+  "sessions": {
+    "s_d482fbceb53c16": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1e960-929a-7861-a095-db9e24003b6a",
+        "model": "gpt-6.2-sol"
+      },
+      "human_author": "jeremyzhang866 <jeremy.zhang866@gmail.com>"
+    }
+  }
+}
